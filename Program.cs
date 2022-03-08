@@ -54,20 +54,17 @@ namespace BMS_Random_Test_Generator
                     );
 
             Console.WriteLine(
-                    "BLUE STK:    " + Flights_Strikers.Element("Name").Value + "\n"
-                    );
-
-            foreach (string str in Flights_Strikers_Ordances)
-            {
-                Console.WriteLine("    " + str + "\n");
-            }
-
-            Console.WriteLine(
-                    "BLUE STK:    " + Flights_Strikers.Element("Name").Value + "\n" +
-                    "BLUE SEAD:   " + Flights_SEAD.Element("Name").Value + "\n" +
-                    "BLUE ESCORT: " + Flights_Escort.Element("Name").Value + "\n" +
+                    "BLUE STK:    " + Flights_Strikers   .Element("Name").Value + "\n" +
+                    "BLUE SEAD:   " + Flights_SEAD       .Element("Name").Value + "\n" +
+                    "BLUE ESCORT: " + Flights_Escort     .Element("Name").Value + "\n" +
                     "ADVERSARY:   " + Flights_Adversaries.Element("Name").Value + "\n"
                     );
+
+            Console.WriteLine("LOADOUT SUGGESTION:\n");
+            foreach (string str in Flights_Strikers_Ordances)
+            {
+                Console.WriteLine("    " + str);
+            }
         }
 
         static XElement RandomXElement(IEnumerable<XElement> CTs, IEnumerable<XElement> OCDs)
