@@ -14,13 +14,11 @@ namespace BMS_Random_Test_Generator
 
             string objectsFolder = appRegInfo.installDir + "\\Data\\TerrData\\Objects\\";
 
-            XElement CT  = XElement.Load(objectsFolder + "Falcon4_CT.xml" );
-            XElement OCD = XElement.Load(objectsFolder + "Falcon4_OCD.xml");
-            XElement VCD = XElement.Load(objectsFolder + "Falcon4_VCD.xml");
-            XElement WCD = XElement.Load(objectsFolder + "Falcon4_WCD.xml");
-            XElement WLD = XElement.Load(objectsFolder + "Falcon4_WLD.xml");
-
-            IEnumerable<XElement> CTs = CT.Elements("CT");
+            IEnumerable<XElement> CTs  = XElement.Load(objectsFolder + "Falcon4_CT.xml" ).Elements("CT");
+            IEnumerable<XElement> OCDs = XElement.Load(objectsFolder + "Falcon4_OCD.xml").Elements("OCD");
+            IEnumerable<XElement> VCDs = XElement.Load(objectsFolder + "Falcon4_VCD.xml").Elements("VCD");
+            IEnumerable<XElement> WCDs = XElement.Load(objectsFolder + "Falcon4_WCD.xml").Elements("WCD");
+            IEnumerable<XElement> WLDs = XElement.Load(objectsFolder + "Falcon4_WLD.xml").Elements("WLD");
 
             IEnumerable<XElement> AFBs = CTs
                                            .Where(x => x.Element("Domain").Value   == "3")
@@ -37,43 +35,22 @@ namespace BMS_Random_Test_Generator
                                            .Where(x => x.Element("SubType").Value  == "7")
                                            .Where(x => x.Element("Owner").Value    == "0");
 
-            XElement CT_AFB_TO              = AFBs   .ElementAt(new Random().Next(AFBs   .Count()));
-            XElement CT_AFB_TARGET          = AFBs   .ElementAt(new Random().Next(AFBs   .Count()));
-            XElement CT_Flights_Strikers    = Flights.ElementAt(new Random().Next(Flights.Count()));
-            XElement CT_Flights_SEAD        = Flights.ElementAt(new Random().Next(Flights.Count()));
-            XElement CT_Flights_Escort      = Flights.ElementAt(new Random().Next(Flights.Count()));
-            XElement CT_Flights_Adversaries = Flights.ElementAt(new Random().Next(Flights.Count()));
+            XElement AFB_TO              = RandomXElement(AFBs, OCDs);
+            XElement AFB_ATK             = RandomXElement(AFBs, OCDs);
 
-            XElement AFB_TO              = OCD.Elements("OCD").First(x => x.Element("CtIdx").Value == CT_AFB_TO             .Attribute("Num").Value);
-            XElement AFB_ATK             = OCD.Elements("OCD").First(x => x.Element("CtIdx").Value == CT_AFB_TARGET         .Attribute("Num").Value);
-            XElement Flights_Strikers    = VCD.Elements("VCD").First(x => x.Element("CtIdx").Value == CT_Flights_Strikers   .Attribute("Num").Value);
-            XElement Flights_SEAD        = VCD.Elements("VCD").First(x => x.Element("CtIdx").Value == CT_Flights_SEAD       .Attribute("Num").Value);
-            XElement Flights_Escort      = VCD.Elements("VCD").First(x => x.Element("CtIdx").Value == CT_Flights_Escort     .Attribute("Num").Value);
-            XElement Flights_Adversaries = VCD.Elements("VCD").First(x => x.Element("CtIdx").Value == CT_Flights_Adversaries.Attribute("Num").Value);
+            XElement Flights_Strikers    = RandomXElement(Flights, VCDs);
+            XElement Flights_SEAD        = RandomXElement(Flights, VCDs);
+            XElement Flights_Escort      = RandomXElement(Flights, VCDs);
+            XElement Flights_Adversaries = RandomXElement(Flights, VCDs);
 
-            List<string> Flights_Strikers_HPs    = new List<string>();
-            List<string> Flights_SEAD_HPs        = new List<string>();
-            List<string> Flights_Escort_HPs      = new List<string>();
-            List<string> Flights_Adversaries_HPs = new List<string>();
-
-            ListWeaponSlots(Flights_Strikers,    Flights_Strikers_HPs);
-            ListWeaponSlots(Flights_SEAD,        Flights_SEAD_HPs);
-            ListWeaponSlots(Flights_Escort,      Flights_Escort_HPs);
-            ListWeaponSlots(Flights_Adversaries, Flights_Adversaries_HPs);
-
-            List<string> Flights_Strikers_Ordances    = new List<string>();
-            List<string> Flights_SEAD_Ordances        = new List<string>();
-            List<string> Flights_Escort_Ordances      = new List<string>();
-            List<string> Flights_Adversaries_Ordances = new List<string>();
-
-            SuggestPayloads(WLD, WCD, Flights_Strikers_HPs,    Flights_Strikers_Ordances);
-            SuggestPayloads(WLD, WCD, Flights_SEAD_HPs,        Flights_SEAD_Ordances);
-            SuggestPayloads(WLD, WCD, Flights_Escort_HPs,      Flights_Escort_Ordances);
-            SuggestPayloads(WLD, WCD, Flights_Adversaries_HPs, Flights_Adversaries_Ordances);
+            List<string> Flights_Strikers_Ordances    = SuggestPayloads(WLDs, WCDs, Flights_Strikers);
+            List<string> Flights_SEAD_Ordances        = SuggestPayloads(WLDs, WCDs, Flights_SEAD);
+            List<string> Flights_Escort_Ordances      = SuggestPayloads(WLDs, WCDs, Flights_Escort);
+            List<string> Flights_Adversaries_Ordances = SuggestPayloads(WLDs, WCDs, Flights_Adversaries);
 
             Console.WriteLine(
-                    "AFB T/O:     " + AFB_TO             .Element("Name").Value + "\n" +
-                    "AFB STRIKE:  " + AFB_ATK            .Element("Name").Value + "\n"
+                    "AFB T/O:     " + AFB_TO .Element("Name").Value + "\n" +
+                    "AFB STRIKE:  " + AFB_ATK.Element("Name").Value + "\n"
                     );
 
             Console.WriteLine(
@@ -93,29 +70,18 @@ namespace BMS_Random_Test_Generator
                     );
         }
 
-        static void SuggestPayloads(XElement WLD, XElement WCD, List<string> Flights_Strikers_HPs, List<string> Flights_Strikers_Ordances)
+        static XElement RandomXElement(IEnumerable<XElement> CTs, IEnumerable<XElement> OCDs)
         {
-            IEnumerable<string> Flights_Strikers_HP_WLDs = Flights_Strikers_HPs.Distinct();
-
-            foreach (string WLD_Num in Flights_Strikers_HP_WLDs)
-            {
-                List<string> AvailableOrdances = new List<string>();
-
-                XElement AvailableWeapons = WLD.Elements("WLD").First(x => x.Attribute("Num").Value == WLD_Num);
-
-                for (int i = 0; i < 128; i++)
-                {
-                    if (AvailableWeapons.Element("WpnIdx_" + i) == null)
-                        continue;
-                    AvailableOrdances.Add(WCD.Elements("WCD").First(x => x.Attribute("Num").Value == AvailableWeapons.Element("WpnIdx_" + i).Value).Element("Name").Value);
-                }
-
-                Flights_Strikers_Ordances.Add(AvailableOrdances.ElementAt(new Random().Next(AvailableOrdances.Count())));
-            }
+            XElement CT = CTs.ElementAt(new Random().Next(CTs.Count()));
+            return OCDs.First(x => x.Element("CtIdx").Value == CT.Attribute("Num").Value);
         }
 
-        static void ListWeaponSlots(XElement Flights, List<string> HPs)
+        static List<string> SuggestPayloads(IEnumerable<XElement> WLDs, IEnumerable<XElement> WCDs, XElement Flights)
         {
+            List<string> Ordances= new List<string>();
+
+            List<string> HPs = new List<string>();
+
             for (int i = 0; i < 128; i++)
             {
                 if (Flights.Element("WpnOrHpIdx_" + i) == null)
@@ -124,6 +90,42 @@ namespace BMS_Random_Test_Generator
                     continue;
                 HPs.Add(Flights.Element("WpnOrHpIdx_" + i).Value);
             }
+
+            IEnumerable<string> HP_WLDs = HPs.Distinct();
+
+            foreach (string WLD_Num in HP_WLDs)
+            {
+                List<XElement> AvailableOrdances = new List<XElement>();
+
+                XElement AvailableWeapons = WLDs.First(x => x.Attribute("Num").Value == WLD_Num);
+
+                for (int i = 0; i < 128; i++)
+                {
+                    if (AvailableWeapons.Element("WpnIdx_" + i) == null)
+                        continue;
+                    AvailableOrdances.Add(WCDs.First(x => x.Attribute("Num").Value == AvailableWeapons.Element("WpnIdx_" + i).Value).Element("Name"));
+                }
+
+                if (AvailableOrdances.Count() == 0)
+                    continue;
+
+                Ordances.Add(AvailableOrdances.ElementAt(new Random().Next(AvailableOrdances.Count())).Value);
+            }
+
+            return Ordances;
+        }
+
+        static IEnumerable<XElement> FilterCT(IEnumerable<XElement> CTs)
+        {
+            return CTs.Where(x => x.Element("Domain").Value == "3");
+        }
+    }
+
+    public static class ExMethod
+    {
+        public static XElement FetchCT(this XElement XE, IEnumerable<XElement> CTs)
+        {
+            return CTs.First(x => x.Attribute("Num").Value == XE.Element("CtIdx").Value);
         }
     }
 
